@@ -94,9 +94,7 @@ export default function NFTGeneratorPage() {
         </Card>
 
         <div className="mt-8 text-center">
-          <p className="text-blue-200 text-sm">
-            Run the scripts in the /scripts folder to generate your NFT collection
-          </p>
+          <p className="text-blue-200 text-sm">Powered by Rust for maximum performance and reliability</p>
         </div>
       </div>
     </div>
