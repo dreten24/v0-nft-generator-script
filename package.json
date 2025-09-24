@@ -5,8 +5,6 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-    "generate": "tsx scripts/run-generator.ts",
-    "generate:test": "tsx scripts/run-generator.ts --supply 10",
     "lint": "next lint",
     "start": "next start"
   },
@@ -41,6 +39,7 @@
     "@radix-ui/react-tooltip": "1.1.6",
     "@vercel/analytics": "1.3.1",
     "autoprefixer": "^10.4.20",
+    "canvas": "latest",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
@@ -68,14 +67,11 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",
-    "@types/canvas": "^2.11.0",
     "@types/node": "^22",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "canvas": "^2.11.2",
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",
-    "tsx": "^4.7.0",
     "tw-animate-css": "1.3.3",
     "typescript": "^5"
   }

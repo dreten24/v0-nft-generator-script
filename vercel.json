@@ -1,0 +1,17 @@
+{
+  "builds": [
+    {
+      "src": "Cargo.toml",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "output"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
