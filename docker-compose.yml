@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  nft-generator:
+    build: .
+    container_name: fractal-nft-generator
+    volumes:
+      - ./output:/app/output
+    environment:
+      - RUST_LOG=info
+    command: >
+      ./generate 
+      --output-dir /app/output 
+      --count 4444 
+      --size 512 
+      --max-file-size 5120
