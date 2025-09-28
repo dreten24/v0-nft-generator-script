@@ -60,12 +60,11 @@ export default function CommunityGallery() {
     const eraIndex = Math.min(Math.floor((tokenId - 1) / organismsPerEra), eras.length - 1)
     const era = eras[eraIndex]
 
-    // Era-specific organisms
     const eraOrganisms = {
-      precambrian: ["cyanobacteria", "stromatolite", "acritarch", "dickinsonia"],
+      precambrian: ["cyanobacteria", "stromatolite", "acritarch", "dickinsonia", "jellyfish"],
       paleozoic: ["trilobite", "brachiopod", "crinoid", "eurypterid", "dunkleosteus"],
       mesozoic: ["triceratops", "tyrannosaurus", "pteranodon", "ammonite", "plesiosaur"],
-      cenozoic: ["mammoth", "sabertooth", "giant-sloth", "terror-bird", "basilosaurus"],
+      cenozoic: ["mammoth", "sabertooth", "giant-sloth", "terror-bird", "basilosaurus", "panda", "lion", "wolf"],
       devonian: ["placoderm", "coelacanth", "archaeopteris", "bothrilepis"],
       carboniferous: ["meganeura", "arthropleura", "lepidodendron", "helicoprion"],
       permian: ["dimetrodon", "gorgonopsid", "scutosaurus", "helicoprion"],
@@ -181,8 +180,15 @@ export default function CommunityGallery() {
     ctx.rotate(rotation)
     ctx.scale(scale, scale)
 
-    // Draw fractal based on organism characteristics
-    if (organism.includes("spiral") || organism.includes("ammonite")) {
+    if (organism.includes("jellyfish")) {
+      drawJellyfish(ctx, depth, complexity, colors)
+    } else if (organism.includes("panda")) {
+      drawPanda(ctx, depth, complexity, colors)
+    } else if (organism.includes("lion")) {
+      drawLion(ctx, depth, complexity, colors)
+    } else if (organism.includes("wolf")) {
+      drawWolf(ctx, depth, complexity, colors)
+    } else if (organism.includes("spiral") || organism.includes("ammonite")) {
       drawSpiral(ctx, depth, complexity, colors)
     } else if (organism.includes("branch") || organism.includes("tree")) {
       drawBranching(ctx, depth, complexity, colors)
@@ -199,6 +205,245 @@ export default function CommunityGallery() {
 
     // Convert canvas to data URL
     return canvas.toDataURL("image/png", 0.8)
+  }
+
+  const drawJellyfish = (ctx: CanvasRenderingContext2D, depth: number, complexity: number, colors: string[]) => {
+    // Draw bell/dome
+    const bellRadius = 60 * complexity
+    ctx.fillStyle = colors[2] + "60"
+    ctx.beginPath()
+    ctx.arc(0, -30, bellRadius, 0, Math.PI)
+    ctx.fill()
+
+    // Draw bell outline with fractal edges
+    ctx.strokeStyle = colors[3]
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    for (let i = 0; i <= 20; i++) {
+      const angle = (i / 20) * Math.PI
+      const radius = bellRadius + Math.sin(i * depth) * 5 * complexity
+      const x = Math.cos(angle + Math.PI) * radius
+      const y = Math.sin(angle + Math.PI) * radius - 30
+      if (i === 0) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    }
+    ctx.stroke()
+
+    // Draw flowing tentacles with fractal curves
+    const tentacles = 6 + depth
+    for (let t = 0; t < tentacles; t++) {
+      const startAngle = (t / tentacles) * Math.PI - Math.PI / 2
+      const startX = Math.cos(startAngle) * bellRadius * 0.8
+      const startY = Math.sin(startAngle) * bellRadius * 0.8 + 30
+
+      ctx.strokeStyle = colors[4] + "80"
+      ctx.lineWidth = 3 - t * 0.2
+      ctx.beginPath()
+      ctx.moveTo(startX, startY)
+
+      // Create flowing tentacle with fractal waves
+      for (let i = 1; i <= 15; i++) {
+        const progress = i / 15
+        const waveAmplitude = 10 * complexity * Math.sin(progress * depth * Math.PI)
+        const x = startX + waveAmplitude * Math.cos(progress * 4 + t)
+        const y = startY + progress * 80 * complexity
+        ctx.lineTo(x, y)
+      }
+      ctx.stroke()
+    }
+  }
+
+  const drawPanda = (ctx: CanvasRenderingContext2D, depth: number, complexity: number, colors: string[]) => {
+    // Draw face circle with fractal edge
+    const faceRadius = 70 * complexity
+    ctx.fillStyle = colors[4] + "90"
+    ctx.beginPath()
+    for (let i = 0; i <= 50; i++) {
+      const angle = (i / 50) * 2 * Math.PI
+      const radius = faceRadius + Math.sin(i * depth) * 3
+      const x = Math.cos(angle) * radius
+      const y = Math.sin(angle) * radius
+      if (i === 0) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    }
+    ctx.fill()
+
+    // Draw ear patterns with fractals
+    const earPositions = [
+      [-45, -45],
+      [45, -45],
+    ]
+    earPositions.forEach(([ex, ey]) => {
+      ctx.fillStyle = colors[1]
+      ctx.beginPath()
+      const earRadius = 25 * complexity
+      for (let i = 0; i <= 20; i++) {
+        const angle = (i / 20) * 2 * Math.PI
+        const radius = earRadius + Math.sin(i * depth * 2) * 2
+        const x = ex + Math.cos(angle) * radius
+        const y = ey + Math.sin(angle) * radius
+        if (i === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+      }
+      ctx.fill()
+    })
+
+    // Draw eye patches with fractal patterns
+    const eyePositions = [
+      [-25, -10],
+      [25, -10],
+    ]
+    eyePositions.forEach(([ex, ey]) => {
+      ctx.fillStyle = colors[0]
+      ctx.beginPath()
+      const eyeRadius = 15 * complexity
+      for (let i = 0; i <= 30; i++) {
+        const angle = (i / 30) * 2 * Math.PI
+        const radius = eyeRadius + Math.sin(i * depth * 3) * 1.5
+        const x = ex + Math.cos(angle) * radius
+        const y = ey + Math.sin(angle) * radius
+        if (i === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+      }
+      ctx.fill()
+    })
+
+    // Add fractal bamboo pattern around panda
+    ctx.strokeStyle = colors[2] + "60"
+    ctx.lineWidth = 2
+    for (let i = 0; i < depth * 2; i++) {
+      const angle = (i / (depth * 2)) * 2 * Math.PI
+      const distance = 90 + i * 5
+      const x = Math.cos(angle) * distance
+      const y = Math.sin(angle) * distance
+
+      ctx.beginPath()
+      ctx.moveTo(x, y)
+      ctx.lineTo(
+        x + Math.cos(angle + Math.PI / 2) * 20 * complexity,
+        y + Math.sin(angle + Math.PI / 2) * 20 * complexity,
+      )
+      ctx.stroke()
+    }
+  }
+
+  const drawLion = (ctx: CanvasRenderingContext2D, depth: number, complexity: number, colors: string[]) => {
+    // Draw mane with fractal rays
+    const maneRays = 12 + depth * 2
+    for (let i = 0; i < maneRays; i++) {
+      const angle = (i / maneRays) * 2 * Math.PI
+      const innerRadius = 50 * complexity
+      const outerRadius = 80 * complexity + Math.sin(i * depth) * 10
+
+      ctx.strokeStyle = colors[2] + "70"
+      ctx.lineWidth = 4 - i * 0.1
+      ctx.beginPath()
+      ctx.moveTo(Math.cos(angle) * innerRadius, Math.sin(angle) * innerRadius)
+
+      // Create wavy mane strands
+      for (let j = 1; j <= 10; j++) {
+        const progress = j / 10
+        const currentRadius = innerRadius + (outerRadius - innerRadius) * progress
+        const wave = Math.sin(progress * depth * Math.PI) * 5
+        const x = Math.cos(angle) * (currentRadius + wave)
+        const y = Math.sin(angle) * (currentRadius + wave)
+        ctx.lineTo(x, y)
+      }
+      ctx.stroke()
+    }
+
+    // Draw face with fractal features
+    ctx.fillStyle = colors[3] + "80"
+    ctx.beginPath()
+    const faceRadius = 45 * complexity
+    for (let i = 0; i <= 40; i++) {
+      const angle = (i / 40) * 2 * Math.PI
+      const radius = faceRadius + Math.sin(i * depth * 2) * 2
+      const x = Math.cos(angle) * radius
+      const y = Math.sin(angle) * radius
+      if (i === 0) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    }
+    ctx.fill()
+
+    // Add crown-like fractal pattern above
+    ctx.strokeStyle = colors[4]
+    ctx.lineWidth = 3
+    for (let i = 0; i < 5; i++) {
+      const angle = -Math.PI / 2 + (i - 2) * 0.3
+      const height = 30 + i * 5 * complexity
+      ctx.beginPath()
+      ctx.moveTo(0, -faceRadius)
+      ctx.lineTo(Math.cos(angle) * 15, -faceRadius - height)
+      ctx.stroke()
+    }
+  }
+
+  const drawWolf = (ctx: CanvasRenderingContext2D, depth: number, complexity: number, colors: string[]) => {
+    // Draw angular wolf head silhouette
+    ctx.fillStyle = colors[1] + "80"
+    ctx.beginPath()
+    const headPoints = [
+      [0, -60 * complexity], // top of head
+      [25 * complexity, -45], // right ear
+      [35 * complexity, -20], // right side
+      [30 * complexity, 10], // right jaw
+      [15 * complexity, 25], // right muzzle
+      [0, 30 * complexity], // nose
+      [-15 * complexity, 25], // left muzzle
+      [-30 * complexity, 10], // left jaw
+      [-35 * complexity, -20], // left side
+      [-25 * complexity, -45], // left ear
+    ]
+
+    headPoints.forEach(([x, y], i) => {
+      // Add fractal noise to each point
+      const noiseX = x + Math.sin(i * depth) * 3 * complexity
+      const noiseY = y + Math.cos(i * depth) * 3 * complexity
+      if (i === 0) ctx.moveTo(noiseX, noiseY)
+      else ctx.lineTo(noiseX, noiseY)
+    })
+    ctx.closePath()
+    ctx.fill()
+
+    // Draw pack symbols around wolf (fractal moon phases)
+    const moonPhases = depth
+    for (let i = 0; i < moonPhases; i++) {
+      const angle = (i / moonPhases) * 2 * Math.PI
+      const distance = 90 + i * 10
+      const x = Math.cos(angle) * distance
+      const y = Math.sin(angle) * distance
+
+      ctx.fillStyle = colors[4] + "60"
+      ctx.beginPath()
+      const moonRadius = 8 + i * 2
+      ctx.arc(x, y, moonRadius, 0, 2 * Math.PI)
+      ctx.fill()
+
+      // Add fractal crescent
+      ctx.fillStyle = colors[0] + "40"
+      ctx.beginPath()
+      ctx.arc(x + moonRadius * 0.3, y, moonRadius * 0.8, 0, 2 * Math.PI)
+      ctx.fill()
+    }
+
+    // Add howling lines with fractal waves
+    ctx.strokeStyle = colors[3] + "50"
+    ctx.lineWidth = 2
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath()
+      const startY = -40 - i * 15
+      ctx.moveTo(0, startY)
+
+      for (let j = 1; j <= 20; j++) {
+        const progress = j / 20
+        const wave = Math.sin(progress * depth * Math.PI + i) * 10 * complexity
+        const x = wave
+        const y = startY - progress * 30
+        ctx.lineTo(x, y)
+      }
+      ctx.stroke()
+    }
   }
 
   const drawSpiral = (ctx: CanvasRenderingContext2D, depth: number, complexity: number, colors: string[]) => {
