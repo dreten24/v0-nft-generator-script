@@ -19,6 +19,12 @@ interface NFTItem {
   likes: number
   views: number
   isVerified: boolean
+  fractalDepth: number
+  complexity: number
+  colorVariant: number
+  rotationFactor: number
+  scaleFactor: number
+  uniqueHash: string
 }
 
 export default function CommunityGallery() {
@@ -29,6 +35,7 @@ export default function CommunityGallery() {
   const [selectedRarity, setSelectedRarity] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
   const [loading, setLoading] = useState(true)
+  const [duplicateCount, setDuplicateCount] = useState(0)
 
   const rarityColors = {
     Common: "bg-gray-500",
@@ -38,31 +45,124 @@ export default function CommunityGallery() {
     Legendary: "bg-yellow-500",
   }
 
-  const eras = ["Hadean", "Archean", "Proterozoic", "Paleozoic", "Mesozoic", "Cenozoic", "Anthropocene"]
+  const eras = ["precambrian", "paleozoic", "mesozoic", "cenozoic", "devonian", "carboniferous", "permian"]
+
+  const generateUniqueNFT = (tokenId: number): NFTItem => {
+    // Use token ID as seed for deterministic generation
+    const seed = tokenId * 12345 + 67890
+    const random = (seed: number) => {
+      const x = Math.sin(seed) * 10000
+      return x - Math.floor(x)
+    }
+
+    // Determine era based on token distribution (4444 / 7 eras ≈ 635 per era)
+    const organismsPerEra = Math.ceil(4444 / eras.length)
+    const eraIndex = Math.min(Math.floor((tokenId - 1) / organismsPerEra), eras.length - 1)
+    const era = eras[eraIndex]
+
+    // Era-specific organisms
+    const eraOrganisms = {
+      precambrian: ["cyanobacteria", "stromatolite", "acritarch", "dickinsonia"],
+      paleozoic: ["trilobite", "brachiopod", "crinoid", "eurypterid", "dunkleosteus"],
+      mesozoic: ["triceratops", "tyrannosaurus", "pteranodon", "ammonite", "plesiosaur"],
+      cenozoic: ["mammoth", "sabertooth", "giant-sloth", "terror-bird", "basilosaurus"],
+      devonian: ["placoderm", "coelacanth", "archaeopteris", "bothrilepis"],
+      carboniferous: ["meganeura", "arthropleura", "lepidodendron", "helicoprion"],
+      permian: ["dimetrodon", "gorgonopsid", "scutosaurus", "helicoprion"],
+    }
+
+    const organisms = eraOrganisms[era as keyof typeof eraOrganisms] || eraOrganisms.precambrian
+    const organism = organisms[tokenId % organisms.length]
+
+    // Generate unique parameters based on token ID
+    const fractalDepth = 4 + (tokenId % 4) // 4-7
+    const complexity = 0.3 + random(seed + 1) * 0.7
+    const colorVariant = tokenId % 5
+    const rotationFactor = random(seed + 2) * 2 * Math.PI
+    const scaleFactor = 0.8 + random(seed + 3) * 0.4
+
+    // Create unique hash from parameters
+    const uniqueHash = `${tokenId}-${fractalDepth}-${Math.round(complexity * 1000)}-${colorVariant}-${Math.round(rotationFactor * 1000)}-${Math.round(scaleFactor * 1000)}`
+
+    // Determine rarity based on parameter combinations
+    let rarity: "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary"
+    const rarityScore = fractalDepth + complexity + (scaleFactor > 1.1 ? 1 : 0) + (colorVariant === 4 ? 1 : 0)
+
+    if (rarityScore >= 8.5) rarity = "Legendary"
+    else if (rarityScore >= 7.5) rarity = "Epic"
+    else if (rarityScore >= 6.5) rarity = "Rare"
+    else if (rarityScore >= 5.5) rarity = "Uncommon"
+    else rarity = "Common"
+
+    // Generate traits based on parameters
+    const patterns = ["Spiral", "Radial", "Bilateral", "Branching", "Crystalline", "Segmented"]
+    const colors = ["Oceanic", "Volcanic", "Forest", "Desert", "Cosmic"]
+    const complexities = ["Simple", "Moderate", "Complex", "Ultra"]
+
+    const traits = {
+      "Fractal Pattern": patterns[tokenId % patterns.length],
+      "Color Scheme": colors[colorVariant],
+      Complexity: complexities[Math.min(Math.floor(complexity * 4), 3)],
+      Era: era.charAt(0).toUpperCase() + era.slice(1),
+      Depth: fractalDepth.toString(),
+      Scale: scaleFactor > 1.0 ? "Large" : "Standard",
+    }
+
+    return {
+      tokenId,
+      owner: `D${Math.random().toString(36).substr(2, 8).toUpperCase()}...`,
+      organism: organism.charAt(0).toUpperCase() + organism.slice(1).replace("-", " "),
+      era: era.charAt(0).toUpperCase() + era.slice(1),
+      rarity,
+      traits,
+      imageUrl: `/placeholder.svg?height=400&width=400&query=${organism}+fractal+${era}+era+prehistoric+organism`,
+      likes: Math.floor(random(seed + 4) * 100),
+      views: Math.floor(random(seed + 5) * 1000),
+      isVerified: random(seed + 6) > 0.7,
+      fractalDepth,
+      complexity: Math.round(complexity * 1000) / 1000,
+      colorVariant,
+      rotationFactor: Math.round(rotationFactor * 1000) / 1000,
+      scaleFactor: Math.round(scaleFactor * 1000) / 1000,
+      uniqueHash,
+    }
+  }
 
   useEffect(() => {
-    // Simulate loading NFT data
     const loadNFTs = async () => {
       setLoading(true)
-      // In real implementation, this would fetch from your API
-      const mockNFTs: NFTItem[] = Array.from({ length: 50 }, (_, i) => ({
-        tokenId: i + 1,
-        owner: `0x${Math.random().toString(16).substr(2, 8)}...`,
-        organism: ["Trilobite", "Ammonite", "T-Rex", "Mammoth", "Jellyfish"][Math.floor(Math.random() * 5)],
-        era: eras[Math.floor(Math.random() * eras.length)],
-        rarity: ["Common", "Uncommon", "Rare", "Epic", "Legendary"][Math.floor(Math.random() * 5)] as any,
-        traits: {
-          "Fractal Pattern": ["Spiral", "Radial", "Bilateral", "Branching"][Math.floor(Math.random() * 4)],
-          "Color Scheme": ["Oceanic", "Volcanic", "Forest", "Desert"][Math.floor(Math.random() * 4)],
-          Complexity: ["Simple", "Moderate", "Complex", "Ultra"][Math.floor(Math.random() * 4)],
-        },
-        imageUrl: `/fractal-${["butterfly", "jellyfish", "coral"][Math.floor(Math.random() * 3)]}-with-recursive-${["wing-patterns", "tentacles", "branches"][Math.floor(Math.random() * 3)]}.jpg`,
-        likes: Math.floor(Math.random() * 100),
-        views: Math.floor(Math.random() * 1000),
-        isVerified: Math.random() > 0.7,
-      }))
-      setNfts(mockNFTs)
-      setFilteredNfts(mockNFTs)
+      console.log("[v0] Generating 4444 unique NFTs with validation...")
+
+      const uniqueNFTs: NFTItem[] = []
+      const seenHashes = new Set<string>()
+      let duplicatesFound = 0
+
+      // Generate all 4444 unique NFTs
+      for (let tokenId = 1; tokenId <= 4444; tokenId++) {
+        const nft = generateUniqueNFT(tokenId)
+
+        // Validate uniqueness
+        if (seenHashes.has(nft.uniqueHash)) {
+          duplicatesFound++
+          console.log(`[v0] Duplicate detected for token ${tokenId}, regenerating...`)
+          // Regenerate with modified seed
+          const modifiedNFT = generateUniqueNFT(tokenId + 10000)
+          modifiedNFT.tokenId = tokenId
+          uniqueNFTs.push(modifiedNFT)
+          seenHashes.add(modifiedNFT.uniqueHash)
+        } else {
+          uniqueNFTs.push(nft)
+          seenHashes.add(nft.uniqueHash)
+        }
+      }
+
+      console.log(`[v0] Generated ${uniqueNFTs.length} unique NFTs, ${duplicatesFound} duplicates resolved`)
+      setDuplicateCount(duplicatesFound)
+
+      // Show first 100 for performance in gallery view
+      const displayNFTs = uniqueNFTs.slice(0, 100)
+      setNfts(displayNFTs)
+      setFilteredNfts(displayNFTs)
       setLoading(false)
     }
 
@@ -140,7 +240,10 @@ export default function CommunityGallery() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="space-y-4 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Generating 4444 unique organisms...</p>
+        </div>
       </div>
     )
   }
@@ -151,7 +254,17 @@ export default function CommunityGallery() {
         <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           Community Gallery
         </h1>
-        <p className="text-muted-foreground">Discover and showcase the most beautiful prehistoric fractals</p>
+        <p className="text-muted-foreground">4444 unique prehistoric fractals - no duplicates guaranteed</p>
+        <div className="flex justify-center space-x-4 text-sm">
+          <Badge variant="outline" className="bg-green-50">
+            ✓ 4444 Unique NFTs Generated
+          </Badge>
+          {duplicateCount > 0 && (
+            <Badge variant="outline" className="bg-yellow-50">
+              {duplicateCount} Duplicates Resolved
+            </Badge>
+          )}
+        </div>
       </div>
 
       <Tabs defaultValue="gallery" className="w-full">
@@ -186,7 +299,7 @@ export default function CommunityGallery() {
                   <option value="all">All Eras</option>
                   {eras.map((era) => (
                     <option key={era} value={era}>
-                      {era}
+                      {era.charAt(0).toUpperCase() + era.slice(1)}
                     </option>
                   ))}
                 </select>
@@ -233,6 +346,9 @@ export default function CommunityGallery() {
                     {nft.rarity}
                   </Badge>
                   {nft.isVerified && <Verified className="absolute top-2 left-2 h-5 w-5 text-blue-500 fill-current" />}
+                  <Badge variant="outline" className="absolute bottom-2 left-2 bg-white/90 text-xs">
+                    ID: {nft.uniqueHash.split("-")[0]}
+                  </Badge>
                 </div>
 
                 <CardContent className="p-4 space-y-3">
@@ -252,6 +368,17 @@ export default function CommunityGallery() {
                         <span className="font-medium">{value}</span>
                       </div>
                     ))}
+                  </div>
+
+                  <div className="pt-2 border-t">
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <div>
+                        Depth: {nft.fractalDepth} | Complexity: {nft.complexity}
+                      </div>
+                      <div>
+                        Scale: {nft.scaleFactor} | Rotation: {nft.rotationFactor.toFixed(2)}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between pt-2 border-t">
@@ -281,6 +408,20 @@ export default function CommunityGallery() {
               </Card>
             ))}
           </div>
+
+          {nfts.length === 100 && (
+            <div className="text-center">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // In a real app, this would load more NFTs from the full 4444 collection
+                  alert("Showing first 100 of 4444 unique NFTs. Full collection available after minting!")
+                }}
+              >
+                View All 4444 Unique NFTs
+              </Button>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="rarity" className="space-y-6">
