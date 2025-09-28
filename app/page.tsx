@@ -11,9 +11,10 @@ import { OrganismPreview } from "@/components/organism-preview"
 import { MintInterface } from "@/components/mint-interface"
 import { OrganismGallery } from "@/components/organism-gallery"
 import { GitHubDeployment } from "@/components/github-deployment"
+import { SizeOptimizer } from "@/components/size-optimizer"
 import type { GeologicEra } from "@/lib/geologic-eras"
 
-type AppState = "welcome" | "era-selection" | "preview" | "minting" | "gallery"
+type AppState = "welcome" | "era-selection" | "preview" | "minting" | "gallery" | "optimizer"
 
 export default function PrehistoricFractalsApp() {
   const [appState, setAppState] = useState<AppState>("welcome")
@@ -70,6 +71,15 @@ export default function PrehistoricFractalsApp() {
               <Badge variant="secondary" className="text-xs">
                 44 DOGE Each
               </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAppState("optimizer")}
+                className="hidden md:flex bg-transparent"
+              >
+                <Zap className="w-4 h-4 mr-2" />
+                8KB Optimizer
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -275,6 +285,26 @@ export default function PrehistoricFractalsApp() {
             )}
 
             <OrganismGallery />
+          </div>
+        )}
+
+        {/* Size Optimizer State */}
+        {appState === "optimizer" && (
+          <div className="space-y-8">
+            <div className="flex items-center justify-between">
+              <Button variant="ghost" onClick={() => setAppState("welcome")} className="text-muted-foreground">
+                ← Back to Home
+              </Button>
+            </div>
+
+            <div className="text-center space-y-2">
+              <h2 className="text-3xl font-bold">Size Optimizer</h2>
+              <p className="text-muted-foreground">
+                Optimize all 4444 NFT images to be under 8KB while maintaining artistic quality
+              </p>
+            </div>
+
+            <SizeOptimizer />
           </div>
         )}
       </main>

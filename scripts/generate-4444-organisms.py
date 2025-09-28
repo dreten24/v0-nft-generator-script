@@ -39,7 +39,7 @@ GEOLOGIC_ERAS = {
 }
 
 class AdvancedFractalGenerator:
-    def __init__(self, width=1024, height=1024):
+    def __init__(self, width=512, height=512):  # Reduced from 1024x1024 to 512x512 for smaller file sizes
         self.width = width
         self.height = height
         self.center_x = width // 2
@@ -456,61 +456,171 @@ class AdvancedFractalGenerator:
     def apply_artistic_effects(self, img: Image.Image, token_id: int) -> Image.Image:
         """Apply post-processing effects for artistic quality"""
         # Subtle blur for organic feel
-        img = img.filter(ImageFilter.GaussianBlur(radius=0.8))
+        img = img.filter(ImageFilter.GaussianBlur(radius=0.5))  # Reduced blur radius to preserve detail
         
         # Enhance colors based on token_id
         np.random.seed(token_id)
         
         # Color enhancement
         enhancer = ImageEnhance.Color(img)
-        color_factor = 1.1 + np.random.random() * 0.3
+        color_factor = 1.1 + np.random.random() * 0.2  # Reduced color enhancement to prevent oversaturation
         img = enhancer.enhance(color_factor)
         
         # Contrast enhancement
         enhancer = ImageEnhance.Contrast(img)
-        contrast_factor = 1.0 + np.random.random() * 0.2
+        contrast_factor = 1.0 + np.random.random() * 0.15  # Reduced contrast enhancement
         img = enhancer.enhance(contrast_factor)
         
         # Subtle sharpening
-        img = img.filter(ImageFilter.UnsharpMask(radius=1, percent=120, threshold=2))
+        img = img.filter(ImageFilter.UnsharpMask(radius=0.8, percent=110, threshold=2))  # Reduced sharpening
         
         return img
+    
+    def optimize_for_size(self, img: Image.Image, target_size_kb: int = 8) -> Image.Image:
+        """Optimize image to target file size while preserving quality"""
+        # Convert RGBA to RGB with white background for better compression
+        if img.mode == 'RGBA':
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            background.paste(img, mask=img.split()[-1])  # Use alpha channel as mask
+            img = background
+        
+        # Try different optimization strategies
+        strategies = [
+            {'format': 'WebP', 'quality': 85, 'method': 6},
+            {'format': 'WebP', 'quality': 75, 'method': 6},
+            {'format': 'JPEG', 'quality': 90, 'optimize': True, 'progressive': True},
+            {'format': 'JPEG', 'quality': 85, 'optimize': True, 'progressive': True},
+            {'format': 'JPEG', 'quality': 80, 'optimize': True, 'progressive': True},
+            {'format': 'PNG', 'optimize': True, 'compress_level': 9}
+        ]
+        
+        best_img = None
+        best_size = float('inf')
+        best_format = 'PNG'
+        
+        for strategy in strategies:
+            # Create a copy for testing
+            test_img = img.copy()
+            
+            # Apply palette optimization for PNG
+            if strategy['format'] == 'PNG':
+                # Convert to palette mode with optimized colors
+                test_img = test_img.convert('P', palette=Image.ADAPTIVE, colors=128)
+                test_img = test_img.convert('RGB')  # Convert back for consistency
+            
+            # Test file size
+            import io
+            buffer = io.BytesIO()
+            
+            if strategy['format'] == 'WebP':
+                test_img.save(buffer, format='WebP', 
+                            quality=strategy['quality'], 
+                            method=strategy['method'],
+                            optimize=True)
+            elif strategy['format'] == 'JPEG':
+                test_img.save(buffer, format='JPEG',
+                            quality=strategy['quality'],
+                            optimize=strategy.get('optimize', True),
+                            progressive=strategy.get('progressive', False))
+            else:  # PNG
+                test_img.save(buffer, format='PNG',
+                            optimize=strategy.get('optimize', True),
+                            compress_level=strategy.get('compress_level', 6))
+            
+            size_kb = len(buffer.getvalue()) / 1024
+            
+            # If under target size, this is our best option
+            if size_kb <= target_size_kb:
+                best_img = test_img
+                best_size = size_kb
+                best_format = strategy['format']
+                break
+            
+            # Track the smallest size even if over target
+            if size_kb < best_size:
+                best_img = test_img
+                best_size = size_kb
+                best_format = strategy['format']
+        
+        return best_img, best_format, best_size
 
 def generate_all_organisms():
-    """Generate all 4444 unique organism fractals"""
-    generator = AdvancedFractalGenerator()
+    """Generate all 4444 unique organism fractals optimized for 8KB"""
+    generator = AdvancedFractalGenerator(width=512, height=512)  # Using 512x512 for better compression
     
     # Create output directories
     os.makedirs("generated_nfts/images", exist_ok=True)
     os.makedirs("generated_nfts/metadata", exist_ok=True)
     
-    print("Starting generation of 4444 unique organism fractals...")
+    print("Starting generation of 4444 unique organism fractals (optimized for 8KB)...")
+    
+    total_size = 0
+    size_stats = []
     
     for token_id in range(1, 4445):  # 1 to 4444
         if token_id % 100 == 0:
-            print(f"Generated {token_id}/4444 organisms...")
+            avg_size = sum(size_stats) / len(size_stats) if size_stats else 0
+            print(f"Generated {token_id}/4444 organisms... Avg size: {avg_size:.1f}KB")
         
         # Generate organism
         result = generator.generate_organism_fractal(token_id)
         
-        # Save image
-        image_filename = f"generated_nfts/images/{token_id}.png"
-        result["image"].save(image_filename, "PNG", optimize=True)
+        # Optimize for size
+        optimized_img, best_format, file_size_kb = generator.optimize_for_size(result["image"], target_size_kb=8)
+        
+        # Determine file extension
+        ext = 'webp' if best_format == 'WebP' else ('jpg' if best_format == 'JPEG' else 'png')
+        
+        # Save optimized image
+        image_filename = f"generated_nfts/images/{token_id}.{ext}"
+        
+        if best_format == 'WebP':
+            optimized_img.save(image_filename, format='WebP', quality=85, method=6, optimize=True)
+        elif best_format == 'JPEG':
+            optimized_img.save(image_filename, format='JPEG', quality=85, optimize=True, progressive=True)
+        else:  # PNG
+            optimized_img.save(image_filename, format='PNG', optimize=True, compress_level=9)
+        
+        # Track size statistics
+        actual_size = os.path.getsize(image_filename) / 1024
+        size_stats.append(actual_size)
+        total_size += actual_size
+        
+        # Update metadata with optimization info
+        result["metadata"]["file_size_kb"] = round(actual_size, 2)
+        result["metadata"]["format"] = best_format.lower()
+        result["metadata"]["optimized_for_8kb"] = actual_size <= 8.0
+        result["metadata"]["image_dimensions"] = "512x512"
         
         # Save metadata
         metadata_filename = f"generated_nfts/metadata/{token_id}.json"
         with open(metadata_filename, 'w') as f:
             json.dump(result["metadata"], f, indent=2)
     
-    print("All 4444 organisms generated successfully!")
+    # Final statistics
+    avg_size = total_size / 4444
+    under_8kb = sum(1 for size in size_stats if size <= 8.0)
+    
+    print(f"\nGeneration complete!")
+    print(f"Average file size: {avg_size:.2f}KB")
+    print(f"Files under 8KB: {under_8kb}/4444 ({under_8kb/4444*100:.1f}%)")
+    print(f"Total collection size: {total_size:.1f}KB ({total_size/1024:.1f}MB)")
     
     # Generate collection metadata
     collection_metadata = {
         "name": "Prehistoric Fractals",
-        "description": "4444 unique artistic fractal organisms spanning 7 geologic eras",
+        "description": "4444 unique artistic fractal organisms spanning 7 geologic eras, optimized for web performance",
         "total_supply": 4444,
         "mint_price_doge": 44,
-        "mint_date": "2024-10-01T00:00:00Z"
+        "mint_date": "2024-10-01T00:00:00Z",
+        "optimization": {
+            "target_size_kb": 8,
+            "average_size_kb": round(avg_size, 2),
+            "files_under_target": under_8kb,
+            "success_rate_percent": round(under_8kb/4444*100, 1),
+            "image_dimensions": "512x512",
+            "formats_used": ["webp", "jpeg", "png"]
+        }
     }
     
     with open("generated_nfts/collection.json", 'w') as f:
