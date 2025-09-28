@@ -2,12 +2,13 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Gift, Check, AlertCircle } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { Gift, Check, AlertCircle, Users, Clock } from "lucide-react"
 
 interface AirdropWidgetProps {
   className?: string
@@ -18,6 +19,16 @@ export function AirdropWidget({ className }: AirdropWidgetProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [error, setError] = useState("")
+  const [currentSignups, setCurrentSignups] = useState(0)
+  const [isFull, setIsFull] = useState(false)
+
+  const MAX_AIRDROP_SPOTS = 444
+
+  useEffect(() => {
+    const existingSignups = JSON.parse(localStorage.getItem("airdropSignups") || "[]")
+    setCurrentSignups(existingSignups.length)
+    setIsFull(existingSignups.length >= MAX_AIRDROP_SPOTS)
+  }, [])
 
   // DOGE wallet address validation
   const validateDogeAddress = (address: string): boolean => {
@@ -46,6 +57,13 @@ export function AirdropWidget({ className }: AirdropWidgetProps) {
       // Store the signup (in a real app, this would be an API call)
       const existingSignups = JSON.parse(localStorage.getItem("airdropSignups") || "[]")
 
+      if (existingSignups.length >= MAX_AIRDROP_SPOTS) {
+        setError("Sorry! All 444 airdrop spots have been claimed.")
+        setIsFull(true)
+        setIsSubmitting(false)
+        return
+      }
+
       // Check if already signed up
       if (existingSignups.includes(walletAddress)) {
         setError("This wallet address is already registered for the airdrop")
@@ -57,6 +75,11 @@ export function AirdropWidget({ className }: AirdropWidgetProps) {
       existingSignups.push(walletAddress)
       localStorage.setItem("airdropSignups", JSON.stringify(existingSignups))
 
+      setCurrentSignups(existingSignups.length)
+      if (existingSignups.length >= MAX_AIRDROP_SPOTS) {
+        setIsFull(true)
+      }
+
       // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
@@ -67,6 +90,27 @@ export function AirdropWidget({ className }: AirdropWidgetProps) {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (isFull && !isSubmitted) {
+    return (
+      <Card className={`p-4 bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800 ${className}`}>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
+            <Clock className="w-4 h-4 text-red-600 dark:text-red-400" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-red-800 dark:text-red-200">Airdrop Full!</h3>
+            <p className="text-sm text-red-600 dark:text-red-400">
+              All 444 airdrop spots have been claimed. Follow us for future opportunities!
+            </p>
+          </div>
+          <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+            444/444
+          </Badge>
+        </div>
+      </Card>
+    )
   }
 
   if (isSubmitted) {
@@ -91,6 +135,10 @@ export function AirdropWidget({ className }: AirdropWidgetProps) {
     )
   }
 
+  const remainingSpots = MAX_AIRDROP_SPOTS - currentSignups
+  const progressPercentage = (currentSignups / MAX_AIRDROP_SPOTS) * 100
+  const isAlmostFull = remainingSpots <= 50
+
   return (
     <Card className={`p-4 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20 ${className}`}>
       <form onSubmit={handleSubmit} className="space-y-3">
@@ -104,9 +152,22 @@ export function AirdropWidget({ className }: AirdropWidgetProps) {
               Enter your DOGE wallet address to receive free NFTs on launch day
             </p>
           </div>
-          <Badge variant="outline" className="text-xs">
-            Limited Time
+          <Badge variant={isAlmostFull ? "destructive" : "outline"} className="text-xs">
+            {isAlmostFull ? "Almost Full!" : "Limited Spots"}
           </Badge>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-1">
+              <Users className="w-3 h-3" />
+              <span className="font-medium">{currentSignups}/444 spots claimed</span>
+            </div>
+            <span className={`font-medium ${isAlmostFull ? "text-red-600" : "text-muted-foreground"}`}>
+              {remainingSpots} left
+            </span>
+          </div>
+          <Progress value={progressPercentage} className="h-2" />
         </div>
 
         <div className="flex gap-2">
@@ -127,12 +188,12 @@ export function AirdropWidget({ className }: AirdropWidgetProps) {
             )}
           </div>
           <Button type="submit" disabled={isSubmitting || !walletAddress.trim()} className="px-6">
-            {isSubmitting ? "Registering..." : "Sign Up"}
+            {isSubmitting ? "Registering..." : "Claim Spot"}
           </Button>
         </div>
 
         <div className="text-xs text-muted-foreground">
-          * Airdrop recipients will receive 1-3 random NFTs from the collection on October 1st
+          * Only 444 airdrop spots available! Recipients receive 1-3 random NFTs on October 1st
         </div>
       </form>
     </Card>
