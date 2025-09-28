@@ -115,7 +115,16 @@ export default function CommunityGallery() {
       era: era.charAt(0).toUpperCase() + era.slice(1),
       rarity,
       traits,
-      imageUrl: `/placeholder.svg?height=400&width=400&query=${organism}+fractal+${era}+era+prehistoric+organism`,
+      imageUrl: generateFractalArtwork(
+        tokenId,
+        organism,
+        era,
+        fractalDepth,
+        complexity,
+        colorVariant,
+        rotationFactor,
+        scaleFactor,
+      ),
       likes: Math.floor(random(seed + 4) * 100),
       views: Math.floor(random(seed + 5) * 1000),
       isVerified: random(seed + 6) > 0.7,
@@ -125,6 +134,193 @@ export default function CommunityGallery() {
       rotationFactor: Math.round(rotationFactor * 1000) / 1000,
       scaleFactor: Math.round(scaleFactor * 1000) / 1000,
       uniqueHash,
+    }
+  }
+
+  const generateFractalArtwork = (
+    tokenId: number,
+    organism: string,
+    era: string,
+    depth: number,
+    complexity: number,
+    colorVariant: number,
+    rotation: number,
+    scale: number,
+  ): string => {
+    // Create a canvas element to generate the fractal
+    const canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return "/placeholder.svg?height=400&width=400"
+
+    canvas.width = 400
+    canvas.height = 400
+
+    // Era-based color palettes
+    const colorPalettes = {
+      precambrian: ["#1a365d", "#2d5a87", "#4a90b8", "#7bb3d9", "#b8daf0"],
+      paleozoic: ["#2d5016", "#4a7c59", "#68a085", "#86c5b1", "#a4e8dd"],
+      mesozoic: ["#8b4513", "#cd853f", "#daa520", "#ffd700", "#ffff99"],
+      cenozoic: ["#4b0082", "#663399", "#8a2be2", "#9370db", "#dda0dd"],
+      devonian: ["#006400", "#228b22", "#32cd32", "#90ee90", "#98fb98"],
+      carboniferous: ["#2f4f4f", "#708090", "#778899", "#b0c4de", "#e6e6fa"],
+      permian: ["#8b0000", "#dc143c", "#ff6347", "#ffa07a", "#ffe4e1"],
+    }
+
+    const colors = colorPalettes[era as keyof typeof colorPalettes] || colorPalettes.precambrian
+
+    // Clear canvas with gradient background
+    const gradient = ctx.createRadialGradient(200, 200, 0, 200, 200, 200)
+    gradient.addColorStop(0, colors[0] + "40")
+    gradient.addColorStop(1, colors[1] + "20")
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, 400, 400)
+
+    // Generate fractal pattern based on organism type
+    ctx.save()
+    ctx.translate(200, 200)
+    ctx.rotate(rotation)
+    ctx.scale(scale, scale)
+
+    // Draw fractal based on organism characteristics
+    if (organism.includes("spiral") || organism.includes("ammonite")) {
+      drawSpiral(ctx, depth, complexity, colors)
+    } else if (organism.includes("branch") || organism.includes("tree")) {
+      drawBranching(ctx, depth, complexity, colors)
+    } else if (organism.includes("crystal") || organism.includes("mineral")) {
+      drawCrystalline(ctx, depth, complexity, colors)
+    } else {
+      drawRadial(ctx, depth, complexity, colors)
+    }
+
+    ctx.restore()
+
+    // Add organism-specific details
+    addOrganismDetails(ctx, organism, colors, tokenId)
+
+    // Convert canvas to data URL
+    return canvas.toDataURL("image/png", 0.8)
+  }
+
+  const drawSpiral = (ctx: CanvasRenderingContext2D, depth: number, complexity: number, colors: string[]) => {
+    const maxRadius = 150 * complexity
+    const turns = depth * 2
+    const points = Math.floor(200 * complexity)
+
+    ctx.strokeStyle = colors[2]
+    ctx.lineWidth = 2
+    ctx.beginPath()
+
+    for (let i = 0; i <= points; i++) {
+      const angle = (i / points) * turns * 2 * Math.PI
+      const radius = (i / points) * maxRadius
+      const x = Math.cos(angle) * radius
+      const y = Math.sin(angle) * radius
+
+      if (i === 0) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    }
+    ctx.stroke()
+
+    // Add spiral arms
+    for (let arm = 0; arm < depth; arm++) {
+      ctx.strokeStyle = colors[3] + "80"
+      ctx.beginPath()
+      for (let i = 0; i <= points; i++) {
+        const angle = (i / points) * turns * 2 * Math.PI + (arm * Math.PI) / depth
+        const radius = (i / points) * maxRadius * 0.7
+        const x = Math.cos(angle) * radius
+        const y = Math.sin(angle) * radius
+
+        if (i === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+      }
+      ctx.stroke()
+    }
+  }
+
+  const drawBranching = (ctx: CanvasRenderingContext2D, depth: number, complexity: number, colors: string[]) => {
+    const drawBranch = (x: number, y: number, angle: number, length: number, currentDepth: number) => {
+      if (currentDepth === 0 || length < 2) return
+
+      const endX = x + Math.cos(angle) * length
+      const endY = y + Math.sin(angle) * length
+
+      ctx.strokeStyle = colors[Math.min(currentDepth, colors.length - 1)]
+      ctx.lineWidth = currentDepth * 0.5
+      ctx.beginPath()
+      ctx.moveTo(x, y)
+      ctx.lineTo(endX, endY)
+      ctx.stroke()
+
+      const branchAngle = 0.5 * complexity
+      const lengthReduction = 0.7 + complexity * 0.2
+
+      drawBranch(endX, endY, angle - branchAngle, length * lengthReduction, currentDepth - 1)
+      drawBranch(endX, endY, angle + branchAngle, length * lengthReduction, currentDepth - 1)
+    }
+
+    drawBranch(0, 100, -Math.PI / 2, 80 * complexity, depth)
+  }
+
+  const drawCrystalline = (ctx: CanvasRenderingContext2D, depth: number, complexity: number, colors: string[]) => {
+    const sides = Math.floor(4 + depth * 2)
+    const layers = Math.floor(3 + complexity * 5)
+
+    for (let layer = 0; layer < layers; layer++) {
+      const radius = (layer + 1) * (120 / layers) * complexity
+      ctx.strokeStyle = colors[layer % colors.length]
+      ctx.lineWidth = 2 - layer * 0.2
+      ctx.beginPath()
+
+      for (let i = 0; i <= sides; i++) {
+        const angle = (i / sides) * 2 * Math.PI
+        const x = Math.cos(angle) * radius
+        const y = Math.sin(angle) * radius
+
+        if (i === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+      }
+      ctx.closePath()
+      ctx.stroke()
+    }
+  }
+
+  const drawRadial = (ctx: CanvasRenderingContext2D, depth: number, complexity: number, colors: string[]) => {
+    const rays = Math.floor(8 + depth * 4)
+    const segments = Math.floor(5 + complexity * 10)
+
+    for (let ray = 0; ray < rays; ray++) {
+      const angle = (ray / rays) * 2 * Math.PI
+      ctx.strokeStyle = colors[ray % colors.length]
+      ctx.lineWidth = 1.5
+
+      for (let segment = 1; segment <= segments; segment++) {
+        const radius = (segment / segments) * 120 * complexity
+        const x = Math.cos(angle) * radius
+        const y = Math.sin(angle) * radius
+
+        ctx.beginPath()
+        ctx.arc(x, y, 2 + segment * 0.5, 0, 2 * Math.PI)
+        ctx.stroke()
+      }
+    }
+  }
+
+  const addOrganismDetails = (ctx: CanvasRenderingContext2D, organism: string, colors: string[], tokenId: number) => {
+    // Add unique details based on organism type
+    ctx.fillStyle = colors[4] + "60"
+    const detailCount = 3 + (tokenId % 5)
+
+    for (let i = 0; i < detailCount; i++) {
+      const angle = (i / detailCount) * 2 * Math.PI
+      const radius = 80 + (tokenId % 40)
+      const x = Math.cos(angle) * radius
+      const y = Math.sin(angle) * radius
+      const size = 3 + (tokenId % 8)
+
+      ctx.beginPath()
+      ctx.arc(x, y, size, 0, 2 * Math.PI)
+      ctx.fill()
     }
   }
 
