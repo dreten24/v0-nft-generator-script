@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Sparkles, Clock, Zap, Globe, Github } from "lucide-react"
+import { Sparkles, Clock, Zap, Globe, Github, Verified, BarChart3, Coins, Heart } from "lucide-react"
 import { EraSelector } from "@/components/era-selector"
 import { OrganismPreview } from "@/components/organism-preview"
 import { MintInterface } from "@/components/mint-interface"
@@ -75,6 +75,60 @@ export default function PrehistoricFractalsApp() {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => window.open("/gallery", "_blank")}
+                className="hidden md:flex bg-transparent"
+              >
+                <Globe className="w-4 h-4 mr-2" />
+                Gallery
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open("/advanced", "_blank")}
+                className="hidden md:flex bg-transparent"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Advanced
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open("/mint", "_blank")}
+                className="hidden md:flex bg-transparent"
+              >
+                <Coins className="w-4 h-4 mr-2" />
+                Mint
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open("/utility", "_blank")}
+                className="hidden md:flex bg-transparent"
+              >
+                <Heart className="w-4 h-4 mr-2" />
+                Utility
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open("/analytics", "_blank")}
+                className="hidden md:flex bg-transparent"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Analytics
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open("/verify", "_blank")}
+                className="hidden md:flex bg-transparent"
+              >
+                <Verified className="w-4 h-4 mr-2" />
+                Verify
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setAppState("optimizer")}
                 className="hidden md:flex bg-transparent"
               >
@@ -123,7 +177,7 @@ export default function PrehistoricFractalsApp() {
                 <Button
                   variant="outline"
                   size="lg"
-                  onClick={() => setAppState("gallery")}
+                  onClick={() => window.open("/gallery", "_blank")}
                   className="px-8 bg-transparent"
                 >
                   <Globe className="w-5 h-5 mr-2" />
