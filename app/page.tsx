@@ -12,6 +12,7 @@ import { MintInterface } from "@/components/mint-interface"
 import { OrganismGallery } from "@/components/organism-gallery"
 import { GitHubDeployment } from "@/components/github-deployment"
 import { SizeOptimizer } from "@/components/size-optimizer"
+import { AirdropWidget } from "@/components/airdrop-widget"
 import type { GeologicEra } from "@/lib/geologic-eras"
 
 type AppState = "welcome" | "era-selection" | "preview" | "minting" | "gallery" | "optimizer"
@@ -99,6 +100,9 @@ export default function PrehistoricFractalsApp() {
         {/* Welcome State */}
         {appState === "welcome" && (
           <div className="space-y-12">
+            {/* Airdrop Widget */}
+            <AirdropWidget />
+
             {/* Hero Section */}
             <div className="text-center space-y-6 py-12">
               <div className="space-y-4">
